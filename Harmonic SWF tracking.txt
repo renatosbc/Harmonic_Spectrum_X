@@ -1,0 +1,121 @@
+- Chamar um .php a partir de cada evento (comercial) flash que deva aparecer no relatório de veiculação fornecendo uma chave que identifica qual é essa peça comercial
+
+.Copiar o .fla para a pasta project e publicar a partir dali.
+
+.Colocar no Frame 01 do ActionScript *DOS ANÚNCIOS*:
+-----------------------------------------------------
+import flash.display.*;
+import flash.net.URLRequest;
+
+var urla:String = stage.loaderInfo.url;  // harmonic: não funciona
+// var urla:String = loaderInfo.loaderURL;  // harmonic: retorna 'app:/BootSwf.swf'
+// var urla:String = "file:///C|/Users/Renato/Desktop/harmonic%2Dtemplate%2Dauthoring/project/Logo4.swf"
+
+urla = urla.split("?")[0];    //remove query string after "?"
+var swfname:String = urla.substring(urla.lastIndexOf("/")+1);
+swfname = swfname.split(".")[0];   //remove filename after "."
+trace(urla);
+trace(swfname);
+
+var urlb:String = "http://10.0.0.160/swf_asrun/pixel_asrun.php?key=";
+
+// var url:String = urlb.concat(swfname);
+var url:String = urlb.concat(urla);
+
+var urlRequest:URLRequest = new URLRequest(url);
+var loader:Loader = new Loader();
+loader.load(urlRequest);
+-----------------------------------------------------
+
+.Erro: Scene 1, Layer 'LOGO REDE NEW', Frame 1, Line 2	1046: Type was not found or was not a compile-time constant: URLRequest.
+Clicar no item da library - aba ActionScript e clicar em 'export for actionscript'. Um nome de classe será automaticamente dado.
+
+(script 1)
+
+package REDENEW_16x9 {
+	import flash.display.BitmapData;
+		
+	public class png extends BitmapData {
+		
+		public function png() {
+			// constructor code
+		}
+	}
+}
+
+
+
+- Pasta Compartilhadas Harmonic
+\\10.0.0.100\fs0\gfx.dir     omneon/omneon
+
+
+mkdir /usr/local/nginx/html/swf_asrun
+chgrp www-data /usr/local/nginx/html/swf_asrun
+chmod 2774 /usr/local/nginx/html/swf_asrun     rwxrwsr--
+
+------------------------------------------------------------------------
+<?php
+
+// html/pixel_asrun.php
+// key até 10 caracteres, ou aumentar o campo AstraID no BD
+
+function test_input($data) {
+  $data = trim($data);
+  $data = stripslashes($data);
+  $data = htmlspecialchars($data);
+  return $data;
+}
+
+$RealStart = date('Y-m-d H:i:s').'.000';
+$key = test_input($_GET['key']);
+$AstraID = $key.'SWF'.time();
+$DevType = 'CG';
+
+echo 'AstraID = '.$AstraID.'</br>';
+echo 'RealStart = '.$RealStart.'</br>';
+echo 'DevType = '.$DevType.'</br>';
+
+$hoje = date('Y-m-d');
+$file = './Swf_AsRun-'.$hoje.'.log';
+
+file_put_contents($file, $AstraID.PHP_EOL, FILE_APPEND);
+file_put_contents($file, $RealStart.PHP_EOL, FILE_APPEND);
+file_put_contents($file, $DevType.PHP_EOL, FILE_APPEND);
+
+?>
+------------------------------------------------------------------------
+
+
+- Para enviar um pixel GIF 1x1 transparente sem precisar carregar um arquivo: 
+<html>
+<head></head>
+<body>
+<?php
+header('Content-Type: image/gif');
+//equivalent to readfile('pixel.gif')
+echo "\x47\x49\x46\x38\x37\x61\x1\x0\x1\x0\x80\x0\x0\xfc\x6a\x6c\x0\x0\x0\x2c\x0\x0\x0\x0\x1\x0\x1\x0\x0\x2\x2\x44\x1\x0\x3b";
+//That will output a binary string identical to the binary file contents of a 1x1 transparent gif
+?>
+</body>
+</html>
+
+
+- Uma forma de fazer o track através do NGinx:
+https://github.com/miguellopes/Simple-Tracking-Pixel/blob/master/nginx
+
+
+
+
+
+Logo4.swf em 20/02 (comparar amanhã com o AsRun)
+(acesso manual)
+10.0.0.101 - - [20/Feb/2019:17:51:16 -0300] "GET /pixel_asrun.php?key=abcd HTTP/1.1" 200 100 "http://10.0.0.160/pixel_asrun.php?key=abcd" "Mozilla/5.0 (X11; U; Linux i686; en) AppleWebKit/531.9 (KHTML, like Gecko) AdobeAIR/2.5"
+
+(acesso como evento secundário)
+10.0.0.101 - - [20/Feb/2019:17:51:39 -0300] "GET /pixel_asrun.php?key=abcd HTTP/1.1" 200 100 "http://10.0.0.160/pixel_asrun.php?key=abcd" "Mozilla/5.0 (X11; U; Linux i686; en) AppleWebKit/531.9 (KHTML, like Gecko) AdobeAIR/2.5"
+10.0.0.101 - - [20/Feb/2019:17:52:08 -0300] "GET /pixel_asrun.php?key=abcd HTTP/1.1" 200 100 "http://10.0.0.160/pixel_asrun.php?key=abcd" "Mozilla/5.0 (X11; U; Linux i686; en) AppleWebKit/531.9 (KHTML, like Gecko) AdobeAIR/2.5"
+
+
+! Como separar no AsRun um evento swf gerado como evento secundário de outro gerado manualmente?
+- Uma opção é não logar os eventos swf do AsRun, e logar todos os swf via pixel php, mas isso implica que os eventos sem o pixel no código não serão logados.
+- 

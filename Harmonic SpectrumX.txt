@@ -1,0 +1,129 @@
+Playout Harmonic Spectrum X (+ automação Aveco Spark) + Encoder Electra 
+
+- SDB (representante da Harmonic e da Aveco no Brasil):
+  Escritório: 12 3923-9208
+  suporte@sdbm.com.br
+  www.sdbm.com.br
+
+
+- Servidores Harmonic / Aveco / uplink Satélite
+Spectrum X (servidor de midia e player, chassis comprido)
+Aveco Spark (automação, chassis curto)
+NUE (software de interface com o usuário da Aveco - rodando no micro branco)
+RPC (software de rede (?) da Aveco - rodando no micro branco)
+NTP (servidor de tempo - rodando na máquna HP XW6000 - 10.0.0.2)
+
+10.0.0.100 00:d0:28:17:cd:00 #Spectrum X, pasta fs0, administração web (admin / omneon)
+10.0.0.101 00:d0:28:17:cd:01 #Spectrum X, administração web??  (?? / ??)
+10.0.0.102 ac:1f:6b:18:53:C7 #Aveco Spark (Supermicro X10SLL-F, webadmin motherboard: ADMIN / ADMIN)
+10.0.0.104 98:83:89:6f:db:70 #MASTER NUE/RPC micro branco
+10.0.0.105 34:97:f6:ea:5f:5a #MASTER RPCbackup- micro marcio
+10.0.0.106 00:20:a3:05:4a:b4 #Encoder Electra
+10.0.0.107 00:06:39:09:19:d5 #Modulador NewTek
+10.0.0.108 00:0b:00:1e:53:4e #Encoder Tecsys TS9090HD
+10.0.0.109 00:0e:02:00:ac:50 #HPA
+10.0.0.110 ac:1f:6b:18:57:71 #Aveco VS1/Bomain (máquina virtual no mesmo hardware do 10.0.0.102)
+
+Spectrum X;
+Model: MIP-9101-00H
+S/N: 17480009EN07377  Rev: E1
+Motherboard: Intel S2600WT
+
+- Ligação das portas de rede (da esq para a direita, olhando por trás das máquinas):
+Spectrum X: Sim, Sim, Não, (management), 4x Não
+Aveco : Sim, Não, Sim  --> USAR A FONTE NO CANTO DO GABINETE
+
+- Ordem de ligação das máquinas
+1. Spectrum X  (chassis comprido, aguardar 5 minutos)
+2. Aveco (chassis curto da Supermicro, aguardar 2 minutos)
+3. Nue.exe (micro branco, **com windows firewall desativado!**) 
+
+
+- Pasta Compartilhada (SMB):
+\\10.0.0.100\fs0     omneon/omneon
+(pasta para colocar os vídeos: /mnt/fs0/clipDropFolder)
+
+- Relatórios AsRun:
+ftp://ftpuser:ftpuser@10.0.0.110/TV-1/
+
+- Estações de Trabalho:
+10.0.0.104 98:83:89:6f:db:70 #MASTER_Harmonic micro branco (NUE + RPC)
+10.0.0.105 34:97:f6:ea:5f:5a #MASTER_Atem micro marcio  (RPC backup)
+
+.Para iniciar a interface com o usuário (NUE) clicar no icone 'run.NUE' (no micro branco) e logar 
+user aveco / sem senha
+
+
+- HORÁRIO e Horário de Verão
+Para acertar o horário do servidor de automação (via NUE) entre na interface da Aveco (na NUE), vá em 'time settings',
+set para usar o horário da nue e depois set para usar o master clock.
+
+
+- Manual NUE: https://github.com/AvecodeMatt/NUE_User_Guide
+
+- Licenças (conversa do Vinícius com a Aveco)
+Spectrum X (MIP-9101-42H) SN: 1748-0009-EN-07377
+The SO related is 31046435. There are more licenses in this SO but they are for another unit.
+The licenses for this unit are:
+Qty         License
+1       FW-MIP-9000-MDM
+2       FW-MIP-9000-UDX
+1       FW-MIP-9000-MCS
+1     FW-MIP-9000-BASIC-GXF
+(pelo menos uma dessas licenças foi trocada,mas não tenho o código da nova)
+
+
+----------------------------------------------------------------------
+ENCODER UE918 e HPA Advantech 125W
+
+ENCODER UE918: http://10.0.0.107
+HPPA Advantech 125W: http://10.0.0.109
+
+Potencia	Ganho	Indicação	Indicação(c/n)
+Encoder		HPA		HPA			TecSys
+-10		70		50.9  		17.1	(Hispasat reclama)
+-15		70		48.6		16.1	(indicação igual em Santo Amaro)
+-17		70		46.7		14.6	(Hispasat diz que está nominal
+-18		70		45.9		13.5	(Hispasat diz que está 0.5 dB abaixo - Rede Família com problemas)
+-17		72		47.8		14.3	(após ajuste da antena. 0.2 db acima do nominal)
+
+Freq. teste: 6284500  --> 1090.5
+Estava: 6367000 --> 1008
+
+----------------------------------------------------------------------
+MOLDULADOR NEWTEC
+
+10.0.0.107 / 22  (255.255.252.0)
+expert / expertexpert
+
+
+----------------------------------------------------------------------
+
+
+- RDP cliente Linux com Dual Monitor:
+https://community.spiceworks.com/topic/767113-rdp-client-for-14-04-that-can-do-rdp-using-dual-monitors
+https://community.spiceworks.com/how_to/148288-ubuntu-windows-rdp-true-dual-screens
+
+
+
+- NTP Server no Windows8
+https://russlescai.wordpress.com/2013/01/07/setup-windows-8-as-ntp-time-server/
+
+- Enable the W32Time service to announce itself as a NTP server. Open the registry and navigate to:
+HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\W32Time\Config
+Set the “AnnounceFlags” from 10 (or ‘a’ in hex) to 5.
+
+- Next, enable the NTPServer. Open the registry and navigate to:
+HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\W32Time\TimeProviders\NtpServer
+Set “Enabled” from zero to 1.
+
+- Now, restart the Time service. Open command prompt *as administrator* and run the following:
+C:>net stop w32time && net start w32time
+
+To confirm the settings were changed correctly, run the following (in an admin command prompt):
+C:>w32tm /query /configuration
+
+- Desablitar o windows firewall (necessário para a Nue.exe)
+- Criar IP adicional 10.0.0.2/255.255.252.0 (para emular o XW6000)
+
+- Ir em Serviços (buscar na barra de tarefas) e colocar o serviço 'Horário do Windows' em automático
